@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DustIt</string>
+
+    <!-- Permission -->
+    <string name="permission_title">Let’s clear the clutter</string>
+    <string name="permission_body">DustIt looks through the photos and videos on this phone for chat screenshots, forwards, memes, duplicates and blurry shots you probably don’t need. It all runs on your device, and nothing ever leaves it.</string>
+    <string name="permission_grant">Allow photo access</string>
+    <string name="permission_denied">Photo access is turned off. Turn it on in Settings so DustIt can find clutter.</string>
+    <string name="permission_open_settings">Open settings</string>
+    <string name="permission_limited_title">Allow access to all photos</string>
+    <string name="permission_limited_body">DustIt only works with access to all your photos, and it currently has just some. In Settings, tap Permissions, then Photos and videos, and choose “Always allow all”.</string>
+    <string name="limited_access_title">DustIt needs all your photos</string>
+    <string name="limited_access_body">You gave DustIt access to only some photos. It can’t find clutter that way, so it won’t work until you allow all of them.\n\nIn Settings, tap Permissions, then Photos and videos, and choose “Always allow all”.</string>
+    <string name="limited_access_not_now">Not now</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Home -->
+    <string name="action_refresh">Check for new photos</string>
+    <string name="action_settings">Settings</string>
+    <string name="home_scanning">Analysing your photos</string>
+    <string name="home_scan_progress">%1$s of %2$s photos</string>
+    <string name="home_reclaimable_label">of likely clutter found</string>
+    <string name="home_looking">Looking for clutter…</string>
+    <string name="home_all_clean_title">Nothing to clean up</string>
+    <string name="home_all_clean_body">DustIt didn’t find any clutter. New photos are checked as they arrive.</string>
+    <string name="home_gallery_title">Your gallery</string>
+    <string name="suggestion_summary">%1$s · %2$s</string>
+    <plurals name="photo_count">
+        <item quantity="one">%1$s photo</item>
+        <item quantity="other">%1$s photos</item>
+    </plurals>
+    <plurals name="video_count">
+        <item quantity="one">%1$s video</item>
+        <item quantity="other">%1$s videos</item>
+    </plurals>
+    <plurals name="item_count">
+        <item quantity="one">%1$s file</item>
+        <item quantity="other">%1$s files</item>
+    </plurals>
+    <plurals name="extra_photo_count">
+        <item quantity="one">%1$s extra photo</item>
+        <item quantity="other">%1$s extra photos</item>
+    </plurals>
+    <plurals name="similar_set_count">
+        <item quantity="one">in %1$s set</item>
+        <item quantity="other">in %1$s sets</item>
+    </plurals>
+    <plurals name="double_check_more">
+        <item quantity="one">+%1$s more to double-check</item>
+        <item quantity="other">+%1$s more to double-check</item>
+    </plurals>
+    <plurals name="double_check_only">
+        <item quantity="one">%1$s to double-check</item>
+        <item quantity="other">%1$s to double-check</item>
+    </plurals>
+
+    <!-- Classifier categories, in the model's output order -->
+    <string name="category_documents">Documents &amp; notes</string>
+    <string name="category_documents_desc">Photos of handwritten or printed pages</string>
+    <string name="category_blurry">Blurry photos</string>
+    <string name="category_blurry_desc">Blurred, shaky or low-quality shots</string>
+    <string name="category_chats">Chat screenshots</string>
+    <string name="category_chats_desc">Screenshots of chats and messages</string>
+    <string name="category_food">Food</string>
+    <string name="category_food_desc">Photos of dishes and snacks</string>
+    <string name="category_greetings">Greetings &amp; forwards</string>
+    <string name="category_greetings_desc">Good-morning wishes, quotes and festival forwards</string>
+    <string name="category_memes">Memes</string>
+    <string name="category_memes_desc">Memes, tweets and forwarded jokes</string>
+    <string name="category_notices">Notices &amp; schedules</string>
+    <string name="category_notices_desc">Photos of notices, timetables and date sheets</string>
+    <string name="category_other">Everything else</string>
+    <string name="category_other_desc">Photos that don’t look like clutter</string>
+    <string name="category_pets">Pets</string>
+    <string name="category_pets_desc">Photos of animals</string>
+
+    <!-- Rule-based buckets -->
+    <string name="bucket_similar">Similar photos</string>
+    <string name="bucket_similar_desc">Duplicates and near-identical shots. The best of each set is kept.</string>
+    <string name="bucket_screenshots">Screenshots</string>
+    <string name="bucket_screenshots_desc">Everything in your screenshots folders</string>
+    <string name="bucket_large_videos">Large videos</string>
+    <string name="bucket_large_videos_desc">Videos over 50 MB</string>
+
+    <!-- WhatsApp's hidden folders -->
+    <string name="wa_offer_title">Clean WhatsApp’s hidden folders</string>
+    <string name="wa_offer_body">WhatsApp keeps its own copy of every photo and video you send, plus stickers and media from chats you keep out of your gallery. Galleries can’t see these folders, so they quietly fill up. Share WhatsApp’s Media folder and DustIt will look inside.</string>
+    <string name="wa_offer_allow">Allow access</string>
+    <string name="wa_section_title">WhatsApp’s hidden folders</string>
+    <string name="wa_section_subtitle">Files your gallery can’t see. Deleting one also removes it from the chat on this phone.</string>
+    <string name="wa_section_looking">Looking in WhatsApp’s folders…</string>
+    <string name="wa_section_empty">Nothing to clean up in WhatsApp’s hidden folders.</string>
+    <string name="wa_wrong_folder_title">That’s not WhatsApp’s Media folder</string>
+    <string name="wa_wrong_folder_body">DustIt needs the folder the picker opens on: Android › media › com.whatsapp › WhatsApp › Media. Open it and tap “Use this folder”.</string>
+    <string name="wa_try_again">Try again</string>
+    <string name="bucket_wa_sent">Sent from this phone</string>
+    <string name="bucket_wa_sent_desc">WhatsApp keeps its own copy of everything you send</string>
+    <string name="bucket_wa_private">Chats kept out of gallery</string>
+    <string name="bucket_wa_private_desc">Media from chats with media visibility turned off</string>
+    <string name="bucket_wa_video_notes">Video messages</string>
+    <string name="bucket_wa_video_notes_desc">Round video messages from your chats</string>
+    <string name="bucket_wa_stickers">Stickers</string>
+    <string name="bucket_wa_stickers_desc">Stickers saved from your chats</string>
+
+    <!-- Review: sections -->
+    <string name="review_hint">Tap to select. Long-press to preview, or long-press and drag to select many.</string>
+    <string name="section_with_count">%1$s · %2$s</string>
+    <string name="review_likely_title">Likely clutter</string>
+    <string name="review_likely_subtitle">Selected for you. Tap any you want to keep.</string>
+    <string name="review_maybe_title">Worth a look</string>
+    <string name="review_maybe_subtitle">Less sure about these. Tap the ones you want gone.</string>
+    <string name="review_old_screenshots_title">Older than a month</string>
+    <string name="review_recent_screenshots_title">Recent</string>
+    <string name="review_recent_screenshots_subtitle">Tap the ones you no longer need.</string>
+    <string name="review_large_videos_title">Largest first</string>
+    <string name="review_large_videos_subtitle">Nothing is selected. Tap the ones you want gone.</string>
+    <plurals name="similar_set_title">
+        <item quantity="one">%1$s similar photo</item>
+        <item quantity="other">%1$s similar photos</item>
+    </plurals>
+    <string name="review_sent_copies_title">Still in your gallery</string>
+    <string name="review_sent_copies_subtitle">Selected for you. These are WhatsApp’s extra copies; the originals stay.</string>
+    <string name="review_photos_title">Photos</string>
+    <string name="review_videos_title">Videos</string>
+    <string name="review_stickers_title">Stickers</string>
+    <string name="review_best">Best</string>
+    <string name="review_select_all">Select all</string>
+    <string name="review_deselect_all">Deselect all</string>
+
+    <!-- Review: actions -->
+    <plurals name="review_selected_count">
+        <item quantity="one">%1$s selected</item>
+        <item quantity="other">%1$s selected</item>
+    </plurals>
+    <string name="review_frees">Frees up %1$s</string>
+    <string name="review_trash_progress">Moving %1$s of %2$s to the trash…</string>
+    <string name="review_trash">Move to trash</string>
+    <plurals name="review_trashed">
+        <item quantity="one">Moved %1$s item to the trash and freed %2$s. You can restore it for 30 days.</item>
+        <item quantity="other">Moved %1$s items to the trash and freed %2$s. You can restore them for 30 days.</item>
+    </plurals>
+    <string name="review_all_clear_title">All clear</string>
+    <string name="review_all_clear_body">Nothing left to review here.</string>
+    <string name="review_back_home">Back to suggestions</string>
+    <string name="review_mode_swipe">Swipe</string>
+    <string name="review_mode_grid">Grid</string>
+    <string name="review_reminder_on">Weekly reminder on for %1$s</string>
+    <string name="review_reminder_off">Weekly reminder off for %1$s</string>
+    <string name="cd_reminder_on">Weekly reminder on</string>
+    <string name="cd_reminder_off">Weekly reminder off</string>
+    <string name="preview_selected">Selected for trash</string>
+    <string name="preview_not_selected">Keeping this one</string>
+    <string name="preview_play">Play</string>
+
+    <!-- Review: swipe mode -->
+    <string name="swipe_progress">%1$s of %2$s</string>
+    <string name="swipe_trash_label">TRASH</string>
+    <string name="swipe_keep_label">KEEP</string>
+    <string name="swipe_suggested_trash">Suggested: trash</string>
+    <string name="swipe_suggested_keep">Suggested: keep</string>
+    <string name="swipe_done_title">That’s everything</string>
+    <string name="swipe_done_body">Your choices are saved in the grid too.</string>
+    <string name="swipe_back_to_grid">Back to grid</string>
+    <string name="cd_swipe_trash">Trash</string>
+    <string name="cd_swipe_keep">Keep</string>
+    <string name="cd_swipe_undo">Undo</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_scanning">Scanning</string>
+    <string name="settings_auto_scan">Check new photos automatically</string>
+    <string name="settings_auto_scan_body">Sorts new photos and videos in the background, so suggestions are ready when you open DustIt.</string>
+    <string name="settings_whatsapp">WhatsApp</string>
+    <string name="settings_wa_folders">Hidden folders</string>
+    <string name="settings_wa_connected">DustIt can see WhatsApp’s sent, sticker and private chat folders.</string>
+    <string name="settings_wa_not_connected">Share WhatsApp’s Media folder so DustIt can look in the folders your gallery can’t see.</string>
+    <string name="settings_wa_disconnect">Disconnect</string>
+    <string name="settings_wa_trash">Recently deleted</string>
+    <string name="settings_wa_trash_body">%1$s · %2$s. Files deleted from WhatsApp’s hidden folders stay here for 30 days, then go for good.</string>
+    <string name="settings_wa_trash_empty">Files deleted from WhatsApp’s hidden folders stay here for 30 days. Nothing here right now.</string>
+    <string name="settings_wa_restore">Restore all</string>
+    <string name="settings_wa_delete_now">Delete now</string>
+    <plurals name="wa_delete_now_title">
+        <item quantity="one">Delete %1$s file for good?</item>
+        <item quantity="other">Delete %1$s files for good?</item>
+    </plurals>
+    <string name="wa_delete_now_body">They’ll be gone from this phone. This can’t be undone.</string>
+    <string name="wa_delete_now_confirm">Delete</string>
+    <string name="wa_disconnect_title">Stop looking in WhatsApp’s folders?</string>
+    <string name="wa_disconnect_body">DustIt will stop suggesting files from them.</string>
+    <plurals name="wa_disconnect_body_trash">
+        <item quantity="one">DustIt will stop suggesting files from them, and first put back the %1$s file in its trash.</item>
+        <item quantity="other">DustIt will stop suggesting files from them, and first put back the %1$s files in its trash.</item>
+    </plurals>
+    <string name="settings_reminders">Weekly reminders</string>
+    <string name="settings_reminders_body">Get a nudge once a week when one of these has something to clean up.</string>
+
+    <!-- Accessibility -->
+    <string name="cd_back">Back</string>
+    <string name="cd_selected">Selected</string>
+    <string name="cd_not_selected">Not selected</string>
+    <string name="cd_toggle">Toggle selection</string>
+    <string name="cd_preview">Preview</string>
+    <string name="cd_video">Video</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_scan">Photo analysis</string>
+    <string name="notification_scan_title">Looking for clutter</string>
+    <string name="notification_scan_progress">%1$s of %2$s photos</string>
+    <string name="notification_channel_reminders">Cleanup reminders</string>
+    <string name="notification_reminder_text">%1$s · %2$s ready to review</string>
+</resources>
