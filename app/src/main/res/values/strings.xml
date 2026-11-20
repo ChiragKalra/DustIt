@@ -82,6 +82,8 @@
     <string name="bucket_screenshots_desc">Everything in your screenshots folders</string>
     <string name="bucket_large_videos">Large videos</string>
     <string name="bucket_large_videos_desc">Videos over 50 MB</string>
+    <string name="bucket_wa_videos">WhatsApp videos</string>
+    <string name="bucket_wa_videos_desc">Videos from your chats, biggest first</string>
 
     <!-- WhatsApp's hidden folders -->
     <string name="wa_offer_title">Clean WhatsApp’s hidden folders</string>
@@ -209,5 +211,10 @@
     <string name="notification_scan_title">Looking for clutter</string>
     <string name="notification_scan_progress">%1$s of %2$s photos</string>
     <string name="notification_channel_reminders">Cleanup reminders</string>
+    <string name="notification_channel_files">WhatsApp file changes</string>
+    <string name="notification_files_trash">Moving WhatsApp files to the trash</string>
+    <string name="notification_files_restore">Putting WhatsApp files back</string>
+    <string name="notification_files_delete">Deleting trashed WhatsApp files</string>
+    <string name="notification_files_progress">%1$s of %2$s files</string>
     <string name="notification_reminder_text">%1$s · %2$s ready to review</string>
 </resources>

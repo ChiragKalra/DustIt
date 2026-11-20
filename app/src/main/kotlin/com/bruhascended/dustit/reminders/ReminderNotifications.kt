@@ -35,7 +35,7 @@ object ReminderNotifications {
         val count = NumberFormat.getIntegerInstance().format(summary.headlineCount)
         val items = context.resources.getQuantityString(
             when (bucket) {
-                Bucket.LargeVideos -> R.plurals.video_count
+                Bucket.LargeVideos, Bucket.WhatsAppVideos -> R.plurals.video_count
                 is Bucket.WhatsApp -> R.plurals.item_count // mixes photos, videos and stickers
                 else -> R.plurals.photo_count
             },

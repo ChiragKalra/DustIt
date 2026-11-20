@@ -58,6 +58,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -84,6 +85,7 @@ fun ReviewScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val resources = LocalResources.current
     val snackbarHostState = remember { SnackbarHostState() }
     var previewing by remember { mutableStateOf<ReviewItem?>(null) }
     val swiping = state.swipe != null
@@ -97,15 +99,15 @@ fun ReviewScreen(
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { message ->
             val text = when (message) {
-                is ReviewMessage.Trashed -> context.resources.getQuantityString(
+                is ReviewMessage.Trashed -> resources.getQuantityString(
                     R.plurals.review_trashed,
                     message.count,
                     formatCount(message.count),
                     FileSizeFormatter.formatShortFileSize(context, message.bytes),
                 )
-                is ReviewMessage.Reminder -> context.getString(
+                is ReviewMessage.Reminder -> resources.getString(
                     if (message.on) R.string.review_reminder_on else R.string.review_reminder_off,
-                    context.getString(state.bucket.title),
+                    resources.getString(state.bucket.title),
                 )
             }
             snackbarHostState.currentSnackbarData?.dismiss()

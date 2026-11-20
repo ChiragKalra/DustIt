@@ -13,6 +13,7 @@ import com.bruhascended.dustit.data.MediaStoreSource
 import com.bruhascended.dustit.ml.FeatureExtractor
 import com.bruhascended.dustit.ml.JunkClassifier
 import com.bruhascended.dustit.ml.loadModelInput
+import com.bruhascended.dustit.whatsapp.HiddenFolderSource
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -123,6 +124,21 @@ class ScanBenchmark {
         val start = SystemClock.elapsedRealtime()
         scanner.run(background = true)
         log("background scan: ${SystemClock.elapsedRealtime() - start} ms")
+    }
+
+    /**
+     * Lists every WhatsApp hidden folder from scratch, as if none had been seen before: the worst
+     * case for an app open. One folder after another this took 52–62 s on the test phone.
+     */
+    @Test
+    fun fullHiddenListing(): Unit = runBlocking {
+        val tree = context.appContainer.whatsApp.currentTree()
+        assumeTrue("Connect WhatsApp's folders in the app first", tree != null)
+        repeat(2) {
+            val start = SystemClock.elapsedRealtime()
+            val listing = HiddenFolderSource(resolver).list(tree!!, emptyList())
+            log("full hidden listing ${it + 1}: ${SystemClock.elapsedRealtime() - start} ms, ${listing?.media?.size} files in ${listing?.folders?.size} folders")
+        }
     }
 
     /** What do raw files and very large JPEGs cost to decode, and what does ImageDecoder call them? */

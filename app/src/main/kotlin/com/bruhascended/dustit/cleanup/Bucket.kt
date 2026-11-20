@@ -41,6 +41,18 @@ sealed interface Bucket {
         override val description = R.string.bucket_large_videos_desc
     }
 
+    /**
+     * Videos received on WhatsApp, of any size. On a real phone they held 5.65 GB, almost all under
+     * the large-video bar, and neither the classifier (run on their frames) nor matching found
+     * much of it to suggest: whether a video from a friend matters is the user's call. So they
+     * are only gathered, biggest first, with nothing selected.
+     */
+    data object WhatsAppVideos : Bucket {
+        override val key = "whatsapp-videos"
+        override val title = R.string.bucket_wa_videos
+        override val description = R.string.bucket_wa_videos_desc
+    }
+
     /** Files in WhatsApp's hidden folders. Only shown once the user has shared those folders. */
     sealed interface WhatsApp : Bucket
 
@@ -73,7 +85,7 @@ sealed interface Bucket {
     companion object {
         val whatsApp: List<WhatsApp> = listOf(WhatsAppSent, WhatsAppPrivate, WhatsAppVideoNotes, WhatsAppStickers)
 
-        val all: List<Bucket> = JunkCategory.clutter.map(::Category) + listOf(Similar, Screenshots, LargeVideos) + whatsApp
+        val all: List<Bucket> = JunkCategory.clutter.map(::Category) + listOf(Similar, Screenshots, LargeVideos, WhatsAppVideos) + whatsApp
 
         fun fromKey(key: String?): Bucket? = all.firstOrNull { it.key == key }
     }

@@ -14,6 +14,7 @@ Everything runs on the device. The app does not request the `INTERNET` permissio
 | Similar photos | Byte-identical copies (any content), plus near-identical **photo-like** shots: duplicates anywhere, bursts within 60 s | Everything but the best of each set (largest, then sharpest) |
 | Screenshots | Files in any `*Screenshot*` folder | Older than 30 days |
 | Large videos | Videos ≥ 50 MB | Never |
+| WhatsApp videos | Videos received on WhatsApp, any size, biggest first | Never |
 
 | WhatsApp: Sent from this phone | WhatsApp's copy of everything you send | Sent photos whose original is still in the gallery (it's the kept photo of their similar set) |
 | WhatsApp: Chats kept out of gallery, Video messages, Stickers | Those hidden folders | Never |
@@ -21,6 +22,8 @@ Everything runs on the device. The app does not request the `INTERNET` permissio
 All of this lives in `cleanup/CleanupRules.kt`, the single source of truth for the home cards, review screens and reminders.
 
 Text-heavy images (chats, documents, notices, memes, forwards, screenshots) are never matched by appearance. Different chats or pages share a layout and look identical at thumbnail scale, so they're only grouped when the files are byte-identical.
+
+Videos are judged by size and source only. On the test phone, WhatsApp videos held 5.65 GB, almost none of it over 50 MB, so they get a group of their own. Classifying three keyframes per video was tested (`VideoBenchmark`): it flagged no camera videos, but found only about 0.5 GB of the phone's 19 GB of video and would add about 45 minutes to the first scan. Matching WhatsApp's Sent videos to camera originals found 0.06 GB.
 
 Two guards came out of testing on a real 18,815-photo library:
 
@@ -33,9 +36,9 @@ WhatsApp puts a `.nomedia` file in `WhatsApp Images/Sent`, `Video/Sent`, `Animat
 
 - **Access.** The user shares WhatsApp's `Media` folder once through the system folder picker, which DustIt opens on that folder. The grant is persisted and can be dropped in Settings. A folder that isn't WhatsApp's Media folder (or a folder above it) is refused with an explanation. No all-files permission is involved.
 - **Indexing.** Only the known hidden folders are listed (`whatsapp/WhatsAppLayout.kt`), never the visible ones next to them. Their files get negative ids derived from the document id, so they share the rest of the pipeline: hidden photos are classified, grouped with gallery photos and offered in the usual groups, and hidden videos count as large videos. Stickers are not classified. A file MediaStore also shows is never indexed a second time, because one file under two ids would look like a byte-identical duplicate of itself.
-- **Speed.** The provider checks every file when a folder is listed, about 1.5 ms per file: 20 s for the test phone's 13,000-file Sent folder. So each folder's modification time is stored and only folders that changed are listed again. With nothing new, the check takes about 0.6 s there: one query per top-level folder, plus one listing wherever there are subfolders (Video Notes keeps a folder per week).
+- **Speed.** The provider checks every file when a folder is listed, about 1.5 ms per file: 20 s for the test phone's 13,000-file Sent folder. So each folder's modification time is stored and only folders that changed are listed again. With nothing new, the check takes about 0.6 s there: one query per top-level folder, plus one listing wherever there are subfolders (Video Notes keeps a folder per week). Changed folders are listed four at a time, so the Sent folder sets the pace: listing all 23,645 files from scratch takes 22–24 s, against 52–62 s one folder after another.
 - **Trash.** The system trash only takes photos, videos and audio, so these files go to DustIt's own trash instead. A trashed file is renamed in place (`IMG-…jpg.dustit-trash-<time>`), which stops WhatsApp and galleries opening it, and deleted for good after 30 days. Everything needed to restore it is in the name, so a database reset loses nothing. Settings shows the trash, with Restore all and Delete now. Disconnecting puts trashed files back first, since without access DustIt could never clear them.
-- **Trash speed.** Every rename makes Android re-index the file. On the test phone that is 148 ms per file one at a time, 42 ms with four in flight and 38 ms with eight, so four are used; a delete costs about the same as a rename. Big batches therefore run in the app's scope with progress, commit every 100 files, and keep going if the user leaves the screen.
+- **Trash speed.** Every rename makes Android re-index the file. On the test phone that is 148 ms per file one at a time, 42 ms with four in flight and 38 ms with eight, so four are used; a delete costs about the same as a rename. Big batches therefore run in the app's scope with progress and commit every 100 files. From 100 files up, `HiddenFilesService` (a foreground service with a progress notification) keeps them going if the user leaves the app: without it, OxygenOS froze DustIt 11 s after it left the screen and then let it run about one second in six. With it, 600 files moved in 21.6 s on the test phone with the app in the background, and no freezes.
 
 ## How it fits together
 
@@ -54,7 +57,7 @@ WhatsApp hidden ───┘         hash, sharpness)
 - **`reminders/`**: a weekly job that notifies for each group the user follows that has something to clean. Tapping a notification opens that group.
 - **`ui/review/`**: a grid with one gesture handler (tap toggles, long-press previews, long-press then drag range-selects with auto-scroll), and a swipe mode. Both edit the same selection.
 
-minSdk 30, which gives `MediaStore.createTrashRequest` (recoverable for 30 days) and scoped storage without the all-files permission.
+minSdk 30, which gives `MediaStore.createTrashRequest` (recoverable for 30 days) and scoped storage without the all-files permission. Android 11 was tested end to end on an emulator with 2 GB of RAM and a 192 MB app heap: permission, first scan, home, review, the system trash dialog, connecting WhatsApp's folders, a 600-file WhatsApp batch with the app in the background, and the background watcher. That run found a crash on Android 11 and 12 (an Android 13-only `getPackageInfo` overload, now guarded); `./gradlew :app:lintDebug` reports calls like it.
 
 **Full photo access or nothing.** Android 14+ lets people share only picked photos ("Allow limited access"). DustIt does not support that: it can't find clutter it can't see. In that state it shows a popup explaining why and a button to the app's Settings page, and it never scans, because a sync would cut the index down to the picked photos. `READ_MEDIA_VISUAL_USER_SELECTED` is declared only so the system reports the limited state honestly.
 
@@ -68,9 +71,9 @@ Measured on a OnePlus Nord 6 (Snapdragon 8s Gen 4, Android 16) with 18,815 photo
 |---|---|
 | First scan | 184 s (102 photos/s) |
 | Rescan with nothing new (every app open) | 0.7–1.0 s; 1.4 s with WhatsApp's folders connected (23,500 more files) |
-| First app open after a day of WhatsApp use | 49 s, nearly all of it listing the WhatsApp folders that changed (old results stay on screen meanwhile) |
+| First app open after a day of WhatsApp use | about 25 s at most, nearly all of it listing the WhatsApp folders that changed (old results stay on screen meanwhile); 41–49 s before folders were listed in parallel |
 | New photo, app closed | picked up 10 s later; background scan takes 1.3 s |
-| Memory | ~150–180 MB idle; peaks of ~380 MB while scanning |
+| Memory | ~150–180 MB idle; peaks of ~380 MB while scanning. On a 2 GB Android 11 emulator, a first scan of 1,423 photos (400 of them 12 MP) peaked at ~131 MB |
 | Grid scroll, 5,000 cells, optimised build | 7 ms median frame, 2% janky |
 | MediaStore thumbnail cache growth | none |
 
@@ -89,10 +92,8 @@ A scan cut short keeps what it saved, and the groups are marked as needing a reb
 
 ## Known gaps
 
-- **With the app closed, some groups only catch up when it's opened.** Background scans analyse new gallery photos, so classifier groups (screenshots, memes, chats and the rest) and large videos stay current. Similar photos, duplicates and the four WhatsApp groups update on the next app open, which then takes a few seconds longer, or up to about a minute after a day of WhatsApp use. Weekly reminders for those groups count what was there at the last app open. This is forced by OxygenOS's 5 s background limit; other phones built on the same system probably behave alike, none were tested.
-
-- **Sent videos aren't matched to their originals.** Sent photos are, by appearance. WhatsApp re-encodes videos, and no duration is on record for hidden files, so sent videos are offered largest first and never pre-selected.
-- **Deleting thousands of WhatsApp files takes minutes**, because Android re-indexes each one. It runs in the background with progress, but there's no notification yet if the app is closed part-way.
+- **With the app closed, some groups only catch up when it's opened.** Background scans analyse new gallery photos, so classifier groups (screenshots, memes, chats and the rest) and large videos stay current. Similar photos, duplicates and the four WhatsApp groups update on the next app open, which then takes a few seconds longer, or up to about 25 s after a day of WhatsApp use. Weekly reminders for those groups count what was there at the last app open. This is forced by OxygenOS's 5 s background limit; other phones built on the same system probably behave alike, none were tested.
+- **Sent videos aren't matched to their originals.** Sent photos are, by appearance. For videos it was measured first (`VideoBenchmark`): only 19 of the test phone's 2,833 Sent videos (0.06 GB) had their original in the gallery, so they're offered largest first and never pre-selected.
 - **Classifier precision.** "Chats" is clean (0 of 518 camera photos at any score). "Memes" is noisy: 18% of camera photos score 0.6+, 2.9% score 0.9+, 0% score 0.99+. A per-category threshold or a retrained model is the open decision.
 
 ## Build & test
@@ -116,6 +117,10 @@ adb logcat -d -s DustItBench:I DustIt:I   # per-phase timings; each scan also lo
 
 `ScanBenchmark#wholeScan` runs two whole scans the way the app does, without opening it. That is the only way to time a scan on a phone that is in use, and instrumented tests aren't frozen in the background.
 
+Debug builds include `debug.HiddenFilesProbe`, for checking on a real phone that a big batch keeps going once the user leaves the app. It creates, trashes and deletes only its own `DUSTIT-TEST-*` files in WhatsApp's Sent folder; the commands are in its KDoc.
+
 `whatsapp.HiddenTrashBenchmark` times DustIt's trash renames on a device, using its own files in the real Sent folder (connect WhatsApp's folders in the app first). It deletes them again afterwards.
+
+`VideoBenchmark` measures whether video cleanup would pay off on a device's own library, logging only counts, sizes and timings: `classifyFrames` scores three keyframes per video with the photo classifier (camera videos are the negatives), and `matchSentCopies` looks for WhatsApp Sent videos whose original is in the gallery or among received videos. A full run takes over half an hour.
 
 `JunkClassifierTest` checks that the `JunkCategory` enum order still matches the labels embedded in the `.tflite`. Run it after swapping the model. The similarity thresholds in `SimilarityGrouper` are first guesses and still need tuning against real galleries.

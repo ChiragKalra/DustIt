@@ -126,6 +126,16 @@ object CleanupRules {
             }
             .sortedByDescending { set -> set.items.maxOf { it.dateTaken } }
 
+        Bucket.WhatsAppVideos -> listOfNotNull(
+            section(
+                "videos",
+                SectionKind.Videos,
+                rows.filter { it.kind == MediaKind.Video && WhatsAppLayout.isReceivedMedia(it.relativePath) }
+                    .largestFirst()
+                    .map { it.toItem(preselected = false) },
+            ),
+        )
+
         Bucket.WhatsAppSent -> {
             val sent = rows.filter { WhatsAppLayout.hiddenFolderOf(it.relativePath) == HiddenFolder.Sent }
             val (photos, videos) = sent.partition { it.kind == MediaKind.Image }

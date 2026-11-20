@@ -16,6 +16,7 @@ import com.bruhascended.dustit.ui.image.MediaThumbnailFetcher
 import com.bruhascended.dustit.ui.image.MediaThumbnailKeyer
 import com.bruhascended.dustit.ui.image.VideoFrameFetcher
 import com.bruhascended.dustit.ui.image.VideoFrameKeyer
+import com.bruhascended.dustit.whatsapp.HiddenFilesService
 import com.bruhascended.dustit.whatsapp.WhatsAppAccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,6 +44,7 @@ class DustItApp : Application(), SingletonImageLoader.Factory {
         container = AppContainer(this)
         ScanNotifications.createChannel(this)
         ReminderNotifications.createChannel(this)
+        HiddenFilesService.createChannel(this)
         // Idempotent; covers fresh installs and jobs Android dropped.
         container.scope.launch { container.settings.applyToBackgroundWork() }
     }

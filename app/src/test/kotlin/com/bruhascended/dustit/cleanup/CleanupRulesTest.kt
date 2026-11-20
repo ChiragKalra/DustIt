@@ -88,6 +88,25 @@ class CleanupRulesTest {
     }
 
     @Test
+    fun `WhatsApp videos are received videos of any size, biggest first, none selected`() {
+        val media = "Android/media/com.whatsapp/WhatsApp/Media"
+        val rows = listOf(
+            row(1, kind = MediaKind.Video, size = 3 * mb, path = "$media/WhatsApp Video/"),
+            row(2, kind = MediaKind.Video, size = 70 * mb, path = "$media/WhatsApp Video/"),
+            row(3, kind = MediaKind.Video, size = 9 * mb, path = "Android/media/com.whatsapp.w4b/WhatsApp Business/Media/WhatsApp Business Video/"),
+            // Not received: sent copies and video messages live in hidden folders with their own groups.
+            row(4, kind = MediaKind.Video, size = 20 * mb, path = "$media/WhatsApp Video/Sent/"),
+            row(5, kind = MediaKind.Video, size = 20 * mb, path = "$media/WhatsApp Video Notes/202545/"),
+            // Not videos, or not from WhatsApp.
+            row(6, kind = MediaKind.Image, size = 5 * mb, path = "$media/WhatsApp Images/"),
+            row(7, kind = MediaKind.Video, size = 40 * mb, path = "DCIM/Camera/"),
+        )
+        val sections = CleanupRules.sections(Bucket.WhatsAppVideos, rows, now)
+        assertEquals(listOf(SectionKind.Videos to listOf(2L, 3L, 1L)), ids(sections))
+        assertTrue(sections.single().items.none { it.preselected })
+    }
+
+    @Test
     fun `similar sets keep the largest then sharpest and suggest the rest`() {
         val rows = listOf(
             row(1, group = 1, width = 1000, height = 1000, sharpness = 50f),

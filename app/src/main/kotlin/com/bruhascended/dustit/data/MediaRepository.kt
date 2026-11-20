@@ -10,6 +10,7 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.bruhascended.dustit.cleanup.SimilarityGrouper
 import com.bruhascended.dustit.scan.ImageAnalyzer
+import com.bruhascended.dustit.whatsapp.HiddenFilesService
 import com.bruhascended.dustit.whatsapp.HiddenFolderSource
 import com.bruhascended.dustit.whatsapp.HiddenTrash
 import kotlinx.coroutines.CoroutineScope
@@ -60,6 +61,7 @@ class MediaRepository(
     scope: CoroutineScope,
 ) {
     private val dao = database.mediaDao()
+    private val appContext = context.applicationContext
     private val resolver = context.contentResolver
     private val prefs = context.getSharedPreferences("index", Context.MODE_PRIVATE)
     private val exactDuplicates = ExactDuplicates(resolver)
@@ -161,42 +163,46 @@ class MediaRepository(
      */
     suspend fun trashHidden(ids: List<Long>, onProgress: (Int) -> Unit): List<Long> = withContext(Dispatchers.IO) {
         val items = dao.mediaByIds(ids).filter { it.documentUri != null }
-        val trashedAt = System.currentTimeMillis()
-        val start = SystemClock.elapsedRealtime()
-        val done = AtomicInteger()
-        val movedIds = ArrayList<Long>(items.size)
-        for (chunk in items.chunked(TRASH_COMMIT)) hiddenLock.withLock {
-            val moved = coroutineScope {
-                chunk.map { item ->
-                    async(fileOps) {
-                        val renamed = hiddenFolders.rename(item.documentUri!!.toUri(), HiddenTrash.name(item.displayName, trashedAt))
-                        onProgress(done.incrementAndGet())
-                        renamed?.let { item to it }
-                    }
-                }.awaitAll().filterNotNull()
+        HiddenFilesService.keepRunning(appContext, HiddenFilesService.Task.Trash, items.size) { report ->
+            val trashedAt = System.currentTimeMillis()
+            val start = SystemClock.elapsedRealtime()
+            val done = AtomicInteger()
+            val movedIds = ArrayList<Long>(items.size)
+            for (chunk in items.chunked(TRASH_COMMIT)) hiddenLock.withLock {
+                val moved = coroutineScope {
+                    chunk.map { item ->
+                        async(fileOps) {
+                            val renamed = hiddenFolders.rename(item.documentUri!!.toUri(), HiddenTrash.name(item.displayName, trashedAt))
+                            val count = done.incrementAndGet()
+                            onProgress(count)
+                            report(count)
+                            renamed?.let { item to it }
+                        }
+                    }.awaitAll().filterNotNull()
+                }
+                dao.moveToTrash(
+                    ids = moved.map { it.first.id },
+                    entries = moved.map { (item, uri) ->
+                        TrashedFileEntity(uri.toString(), item.displayName, item.relativePath, item.size, trashedAt)
+                    },
+                )
+                moved.mapTo(movedIds) { it.first.id }
             }
-            dao.moveToTrash(
-                ids = moved.map { it.first.id },
-                entries = moved.map { (item, uri) ->
-                    TrashedFileEntity(uri.toString(), item.displayName, item.relativePath, item.size, trashedAt)
-                },
-            )
-            moved.mapTo(movedIds) { it.first.id }
+            Log.i(TAG, "trash: moved ${movedIds.size} of ${items.size} in ${SystemClock.elapsedRealtime() - start} ms")
+            movedIds
         }
-        Log.i(TAG, "trash: moved ${movedIds.size} of ${items.size} in ${SystemClock.elapsedRealtime() - start} ms")
-        movedIds
     }
 
     val hiddenTrash: Flow<TrashSummary> = dao.trashSummary()
 
     /** Puts every trashed hidden-folder file back under its old name. They reappear on the next scan. */
     suspend fun restoreHiddenTrash(): Int = withContext(Dispatchers.IO) {
-        processTrash { hiddenFolders.rename(it.uri.toUri(), it.originalName) != null }
+        processTrash(HiddenFilesService.Task.Restore) { hiddenFolders.rename(it.uri.toUri(), it.originalName) != null }
     }
 
     /** Deletes every trashed hidden-folder file for good. */
     suspend fun emptyHiddenTrash(): Int = withContext(Dispatchers.IO) {
-        processTrash { hiddenFolders.delete(it.uri.toUri()) }
+        processTrash(HiddenFilesService.Task.Delete) { hiddenFolders.delete(it.uri.toUri()) }
     }
 
     private val trashLock = Mutex()
@@ -206,28 +212,33 @@ class MediaRepository(
     val hiddenTrashBusy: StateFlow<Boolean> = trashBusyState
 
     /** One restore or delete at a time; a second request waits, then finds nothing left to do. */
-    private suspend fun processTrash(action: (TrashedFileEntity) -> Boolean): Int = trashLock.withLock {
+    private suspend fun processTrash(task: HiddenFilesService.Task, action: (TrashedFileEntity) -> Boolean): Int = trashLock.withLock {
         trashBusyState.value = true
         try {
-            processTrashNow(action)
+            processTrashNow(task, action)
         } finally {
             trashBusyState.value = false
         }
     }
 
-    private suspend fun processTrashNow(action: (TrashedFileEntity) -> Boolean): Int {
+    private suspend fun processTrashNow(task: HiddenFilesService.Task, action: (TrashedFileEntity) -> Boolean): Int {
         val entries = dao.trashedFiles()
-        val start = SystemClock.elapsedRealtime()
-        var handledCount = 0
-        for (chunk in entries.chunked(TRASH_COMMIT)) hiddenLock.withLock {
-            val handled = coroutineScope {
-                chunk.map { entry -> async(fileOps) { entry.uri.takeIf { action(entry) } } }.awaitAll().filterNotNull()
+        return HiddenFilesService.keepRunning(appContext, task, entries.size) { report ->
+            val start = SystemClock.elapsedRealtime()
+            val done = AtomicInteger()
+            var handledCount = 0
+            for (chunk in entries.chunked(TRASH_COMMIT)) hiddenLock.withLock {
+                val handled = coroutineScope {
+                    chunk.map { entry ->
+                        async(fileOps) { entry.uri.takeIf { action(entry) }.also { report(done.incrementAndGet()) } }
+                    }.awaitAll().filterNotNull()
+                }
+                dao.deleteTrash(handled)
+                handledCount += handled.size
             }
-            dao.deleteTrash(handled)
-            handledCount += handled.size
+            Log.i(TAG, "trash: processed $handledCount of ${entries.size} in ${SystemClock.elapsedRealtime() - start} ms")
+            handledCount
         }
-        Log.i(TAG, "trash: processed $handledCount of ${entries.size} in ${SystemClock.elapsedRealtime() - start} ms")
-        return handledCount
     }
 
     suspend fun imagesNeedingAnalysis(): List<PendingImage> = dao.imagesNeedingAnalysis(ImageAnalyzer.VERSION)

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import com.bruhascended.dustit.settings.SettingsRepository
@@ -60,7 +61,13 @@ class WhatsAppAccess(context: Context, private val settings: SettingsRepository)
         resolver.persistedUriPermissions.any { it.uri == uri && it.isReadPermission && it.isWritePermission }
 
     private fun isInstalled(packageName: String): Boolean = try {
-        packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+        } else {
+            // The flags overload doesn't exist before Android 13; calling it crashed on Android 11.
+            @Suppress("DEPRECATION")
+            packageManager.getPackageInfo(packageName, 0)
+        }
         true
     } catch (_: PackageManager.NameNotFoundException) {
         false

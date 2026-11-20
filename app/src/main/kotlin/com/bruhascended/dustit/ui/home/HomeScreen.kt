@@ -189,7 +189,8 @@ private fun summaryLines(summary: BucketSummary): Pair<String, String?> {
     val count = summary.headlineCount
     val formatted = formatCount(count)
     val what = when {
-        summary.bucket == Bucket.LargeVideos -> pluralStringResource(R.plurals.video_count, count, formatted)
+        summary.bucket == Bucket.LargeVideos || summary.bucket == Bucket.WhatsAppVideos ->
+            pluralStringResource(R.plurals.video_count, count, formatted)
         summary.bucket == Bucket.Similar -> pluralStringResource(R.plurals.extra_photo_count, count, formatted)
         summary.preselectedCount == 0 -> pluralStringResource(R.plurals.double_check_only, count, formatted)
         else -> photoCount(count)

@@ -59,6 +59,9 @@ object WhatsAppLayout {
         return null
     }
 
+    /** What a gallery shows from WhatsApp: media folders outside the hidden ones, i.e. what was received. */
+    fun isReceivedMedia(relativePath: String): Boolean = isWhatsAppMedia(relativePath) && hiddenFolderOf(relativePath) == null
+
     /** Anything under a WhatsApp media folder, hidden or not. */
     fun isWhatsAppMedia(relativePath: String): Boolean =
         apps.any { relativePath.startsWith(it.mediaRoot + "/", ignoreCase = true) }

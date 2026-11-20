@@ -8,10 +8,20 @@ import com.bruhascended.dustit.data.HiddenFolderEntity
 import com.bruhascended.dustit.data.MediaEntity
 import com.bruhascended.dustit.data.MediaKind
 import com.bruhascended.dustit.data.TrashedFileEntity
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import java.io.IOException
 
 /** Video Notes nests one folder per week; nothing WhatsApp writes goes deeper than that. */
 private const val MAX_DEPTH = 3
+
+/** Enough for the smaller folders to finish while the biggest one lists. */
+private const val PARALLEL = 4
+
+private val listing = Dispatchers.IO.limitedParallelism(PARALLEL)
 
 private val FOLDER_PROJECTION = arrayOf(Document.COLUMN_LAST_MODIFIED, Document.COLUMN_MIME_TYPE)
 
@@ -44,25 +54,40 @@ class HiddenFolderSource(private val resolver: ContentResolver) {
      * reached at all. Folders whose stamp in [previous] still matches are not listed again (their
      * subfolders are still checked): listing the 13,000-file Sent folder took about 20 s on the
      * test phone, a stamp check about 13 ms.
+     *
+     * The top-level folders are walked [PARALLEL] at a time, biggest first (Sent photos), so the
+     * smaller ones finish while it lists. One after another, a day of WhatsApp use made the first
+     * app open spend 41–49 s here on the test phone.
      */
-    fun list(tree: Uri, previous: List<HiddenFolderEntity>): Listing? {
-        val walk = Walk(tree, previous.associateBy { it.relativePath })
+    suspend fun list(tree: Uri, previous: List<HiddenFolderEntity>): Listing? = coroutineScope {
+        val known = previous.associateBy { it.relativePath }
         val apps = WhatsAppLayout.appsUnder(DocumentsContract.getTreeDocumentId(tree))
-            .filter { walk.exists(it.mediaRootDocumentId) }
+            .filter { Walk(tree, known).exists(it.mediaRootDocumentId) }
         // Returning nothing would drop every indexed file (and its analysis), so an unreachable
         // media folder, or a folder that is there but can't be listed, is a failed listing and
         // not an empty one.
-        if (apps.isEmpty()) return null
-        try {
-            for (app in apps) {
-                for ((folder, _) in app.hiddenFolders) {
-                    walk.visit("${app.mediaRootDocumentId}/$folder", "${app.mediaRoot}/$folder/", depth = 0)
+        if (apps.isEmpty()) return@coroutineScope null
+        val walks = apps
+            .flatMap { app -> app.hiddenFolders.map { (folder, _) -> "${app.mediaRootDocumentId}/$folder" to "${app.mediaRoot}/$folder/" } }
+            .map { (documentId, relativePath) ->
+                async(listing) {
+                    try {
+                        Walk(tree, known).apply { visit(documentId, relativePath, depth = 0) }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        null
+                    }
                 }
             }
-        } catch (_: Exception) {
-            return null
-        }
-        return Listing(walk.media, walk.trash, walk.folders, walk.unchanged)
+            .awaitAll()
+        if (walks.any { it == null }) return@coroutineScope null
+        Listing(
+            media = walks.flatMap { it!!.media },
+            trash = walks.flatMap { it!!.trash },
+            folders = walks.flatMap { it!!.folders },
+            unchanged = walks.flatMapTo(HashSet()) { it!!.unchanged },
+        )
     }
 
     private class Subfolder(val documentId: String, val relativePath: String, val modified: Long)

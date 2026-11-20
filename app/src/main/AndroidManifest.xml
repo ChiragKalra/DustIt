@@ -56,6 +56,12 @@
             </intent-filter>
         </receiver>
 
+        <!-- Big batches of WhatsApp file changes keep running if the user leaves the app. -->
+        <service
+            android:name=".whatsapp.HiddenFilesService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
         <!-- Long scans keep running as a foreground service if the user leaves the app. -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
